@@ -1,0 +1,27 @@
+# FROM lambci/yumda:2
+# FROM lambci/lambda:go1.x
+
+# https://blog.quiltdata.com/an-easier-way-to-build-lambda-deployment-packages-with-docker-instead-of-ec2-9050cd486ba8
+FROM amazonlinux
+
+ARG PAPERKEY
+ARG VERSION
+
+RUN yum -y update
+RUN yum -y install git tar gcc wget
+
+RUN pwd
+
+RUN mkdir -p /tmp/gopath
+ENV GOPATH "/tmp/gopath/go/bin"
+ENV PATH "$PATH:$GOPATH"
+
+WORKDIR /tmp/gopath
+RUN wget https://dl.google.com/go/go1.14.4.linux-amd64.tar.gz
+
+RUN tar -zxvf go1.14.4.linux-amd64.tar.gz
+
+RUN go get github.com/keybase/client/go/keybase
+RUN go install -tags production github.com/keybase/client/go/keybase
+
+CMD cp $GOPATH/bin/keybase /deploy/keybase

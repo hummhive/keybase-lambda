@@ -24,15 +24,22 @@ with holonix.pkgs;
  dev-shell = stdenv.mkDerivation (holonix.shell // {
   name = "dev-shell";
 
+  keybase_version = "v5.5.1";
+
   shellHook = holonix.pkgs.lib.concatStrings [
 holonix.shell.shellHook
 ''
+. .env
 export PATH=$PATH:$(npm bin)
 yarn install --no-bin-links
 ''
 ];
 
   buildInputs = [
+   holonix.pkgs.yarn
+   holonix.pkgs.wget
+   holonix.pkgs.docker
+   holonix.pkgs.zip
   ]
    ++ holonix.shell.buildInputs
    ++ config.buildInputs
