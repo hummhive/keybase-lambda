@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "keybase-bot": "^3.6.1",
     "serverless": "^1.73.1"
   }
 }
