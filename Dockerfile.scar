@@ -1,0 +1,38 @@
+ARG AWS_SECRET
+ARG AWS_ID
+ARG AWS_ROLE
+FROM python:3-alpine
+
+RUN apk add zip unzip vim
+RUN addgroup --system scar && adduser -S -G scar scar
+USER scar
+
+WORKDIR /home/scar/
+RUN mkdir /home/scar/.scar
+RUN mkdir /home/scar/.aws
+RUN echo '[default]' > /home/scar/.aws/config
+RUN echo 'region=us-east-1' >> /home/scar/.aws/config
+RUN echo '[default]' > /home/scar/.aws/credentials
+RUN echo aws_access_key_id=${AWS_ID} >> /home/scar/.aws/credentials
+RUN echo aws_secret_access_key=${AWS_SECRET} >> /home/scar/.aws/credentials
+
+ENV PATH=/home/scar/.local/bin:$PATH
+ENV SCAR_LOG_PATH=/home/scar/.scar/
+
+RUN pip3 install scar --user
+
+RUN scar init -f basic-cow.yaml; exit 0
+
+RUN cat /home/scar/.scar/scar.cfg
+
+RUN sed 's/"role": ""/"role": "arn:aws:iam::809852083755:role\/scar-test"/' -i /home/scar/.scar/scar.cfg
+
+RUN cat /home/scar/.scar/scar.cfg
+
+# RUN scar init -n scar-cowsay -i grycap/cowsay
+
+# RUN scar run -n scar-cowsay
+ADD basic-cow.yaml basic-cow.yaml
+
+ENTRYPOINT /bin/sh
+# CMD scar init -f basic-cow.yaml

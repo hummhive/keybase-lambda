@@ -19,5 +19,6 @@ mkdir -p .deploy
 docker run --rm -v $PWD/.deploy:/deploy hummhive:keybase-lambda
 
 zip .deploy/keybase.zip .deploy/keybase
+zip .deploy/kbfsfuse.zip .deploy/kbfsfuse
 
 serverless deploy

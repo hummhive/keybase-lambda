@@ -24,4 +24,7 @@ RUN tar -zxvf go1.14.4.linux-amd64.tar.gz
 RUN go get github.com/keybase/client/go/keybase
 RUN go install -tags production github.com/keybase/client/go/keybase
 
-CMD cp $GOPATH/bin/keybase /deploy/keybase
+# RUN go get github.com/keybase/client/go/kbfsfuse
+RUN go install -tags production github.com/keybase/client/go/kbfs/kbfsfuse
+
+CMD cp $GOPATH/bin/* /deploy

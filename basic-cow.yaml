@@ -1,0 +1,6 @@
+functions:
+  aws:
+  - lambda:
+      name: scarkeybasez
+      container:
+        image: thedavidmeister/scarkeybase

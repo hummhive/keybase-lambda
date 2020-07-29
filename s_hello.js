@@ -5,7 +5,7 @@ serverlessSDK = new serverlessSDK({
   applicationName: 'keybase-lambda-app',
   appUid: 'jgk1242bpz6lpWB7qT',
   orgUid: 'gQtZqXTyc4yRHZZW78',
-  deploymentUid: 'e4a6cd31-b1ca-4cdc-bdbf-65406e30823c',
+  deploymentUid: '549f6049-75cf-4ac5-b0a8-03a8094cf50e',
   serviceName: 'keybase-lambda',
   shouldLogMeta: true,
   shouldCompressLogs: true,

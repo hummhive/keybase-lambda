@@ -1,0 +1,45 @@
+FROM ubuntu
+
+RUN apt-get update -y
+RUN apt-get install sudo -y
+RUN apt-get install curl -y
+RUN apt-get install wget -y
+RUN apt-get install git -y
+RUN apt-get install gcc -y
+RUN apt-get install fuse -y
+RUN apt-get install kmod -y
+# https://askubuntu.com/questions/450570/modprobe-fuse-returns-module-fuse-not-found
+# RUN apt-get install module-assistant -y
+# RUN apt-get install fuse-dev -y
+# RUN cd /usr/src
+# RUN m-a prepare
+# RUN m-a a-i fuse
+# RUN depmod -ae $(uname -r)
+# RUN modprobe fuse
+
+RUN useradd -ms /bin/bash scar
+USER scar
+WORKDIR /home/scar
+
+RUN curl --remote-name https://prerelease.keybase.io/keybase_amd64.deb
+
+# RUN sudo apt install -y ./keybase_amd64.deb
+
+# RUN run_keybase
+
+RUN mkdir -p /tmp/gopath
+ENV GOPATH "/tmp/gopath/go/bin"
+ENV PATH "$PATH:$GOPATH"
+
+WORKDIR /tmp/gopath
+RUN wget https://dl.google.com/go/go1.14.4.linux-amd64.tar.gz
+
+RUN tar -zxvf go1.14.4.linux-amd64.tar.gz
+
+RUN go get github.com/keybase/client/go/keybase
+RUN go install -tags production github.com/keybase/client/go/keybase
+
+# RUN go get github.com/keybase/client/go/kbfsfuse
+RUN go install -tags production github.com/keybase/client/go/kbfs/kbfsfuse
+
+CMD $GOPATH/bin/keybase oneshot && $GOPATH/bin/keybase fs read keybase://private/thedavidmeister/foo.txt
