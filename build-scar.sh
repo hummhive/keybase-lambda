@@ -12,8 +12,10 @@ cd "${0%/*}"
 
 docker build \
  -f Dockerfile.scar \
- --build-arg AWS_SECRET=$AWS_ACCESS_KEY_ID \
- --build-arg AWS_ID=$AWS_ACCESS_KEY_ID \
- --build-arg AWS_ROLE=$AWS_ROLE \
+ --build-arg KEYBASE_PAPERKEY="$KEYBASE_PAPERKEY" \
+ --build-arg AWS_SECRET="$AWS_SECRET_ACCESS_KEY" \
+ --build-arg AWS_ID="$AWS_ACCESS_KEY_ID" \
+ --build-arg AWS_ROLE="$AWS_ROLE" \
  -t scar .
-docker build -f Dockerfile.scarkeybase -t thedavidmeister/scarkeybase .
+docker build -f Dockerfile.scarkeybase2 -t thedavidmeister/scarkeybase2 .
+docker push thedavidmeister/scarkeybase2

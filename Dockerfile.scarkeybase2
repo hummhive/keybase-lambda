@@ -1,0 +1,24 @@
+FROM keybaseio/client:latest
+
+# RUN apt-get update -y
+# RUN apt-get install -y jq
+
+COPY keybase-lambda.sh /keybase-lambda.sh
+RUN chmod +x /keybase-lambda.sh
+
+# FROM scratch
+# COPY --from=build / /
+
+ENV KEYBASE_SERVICE "1"
+ENV XDG_RUNTIME_DIR /tmp
+ENV XDG_CONFIG_DIR /tmp
+ENV XDG_RUNTIME_USER /tmp
+ENV KEYBASE_KBFS_ARGS "-mount-type=none -mode=constrained -runtime-dir=/tmp -debug -storage-root=/tmp -sync-block-cache-fraction=0 -disk-cache-mode=remote"
+ENV HOME /tmp
+ENV TMP /tmp
+
+# RUN keybase config set kbfs.mode constrained
+
+# CMD /keybase-lambda.sh
+
+CMD keybase fs read keybase://private/thedavidmeister/foo.txt

@@ -1,9 +1,11 @@
+FROM python:3-alpine
 ARG AWS_SECRET
 ARG AWS_ID
 ARG AWS_ROLE
-FROM python:3-alpine
+ARG KEYBASE_PAPERKEY
+ENV KEYBASE_PAPERKEY $KEYBASE_PAPERKEY
 
-RUN apk add zip unzip vim
+RUN apk add zip unzip vim util-linux
 RUN addgroup --system scar && adduser -S -G scar scar
 USER scar
 
@@ -35,4 +37,7 @@ RUN cat /home/scar/.scar/scar.cfg
 ADD basic-cow.yaml basic-cow.yaml
 
 ENTRYPOINT /bin/sh
-# CMD scar init -f basic-cow.yaml
+ENV BUILD 13
+# CMD scar init -i keybaseio/client -n $BUILD -e KEYBASE_PAPERKEY="$KEYBASE_PAPERKEY" -e KEYBASE_USERNAME="thedavidmeister"
+# CMD scar init -i thedavidmeister/scarkeybase2:latest -n $BUILD -e KEYBASE_PAPERKEY="$KEYBASE_PAPERKEY" -e KEYBASE_USERNAME="thedavidmeister"
+# CMD scar run -n $BUILD
