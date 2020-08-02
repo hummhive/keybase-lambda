@@ -3,22 +3,30 @@ FROM keybaseio/client:latest
 # RUN apt-get update -y
 # RUN apt-get install -y jq
 
-COPY keybase-lambda.sh /keybase-lambda.sh
-RUN chmod +x /keybase-lambda.sh
+# ENV HOME /home/keybase
+ENV HOME /tmp
+
+COPY keybase-lambda.sh $HOME/keybase-lambda.sh
+RUN chown keybase $HOME/keybase-lambda.sh
+RUN chmod +x $HOME/keybase-lambda.sh
+
+USER keybase
+
+RUN mkdir -p $HOME
+RUN mkdir -p $HOME/.cache
+RUN mkdir -p $HOME/.config
 
 # FROM scratch
 # COPY --from=build / /
 
-ENV KEYBASE_SERVICE "1"
-ENV XDG_RUNTIME_DIR /tmp
-ENV XDG_CONFIG_DIR /tmp
-ENV XDG_RUNTIME_USER /tmp
-ENV KEYBASE_KBFS_ARGS "-mount-type=none -mode=constrained -runtime-dir=/tmp -debug -storage-root=/tmp -sync-block-cache-fraction=0 -disk-cache-mode=remote"
-ENV HOME /tmp
-ENV TMP /tmp
+# ENV KEYBASE_SERVICE 1
+ENV XDG_RUNTIME_DIR $HOME
+ENV XDG_CONFIG_DIR $HOME
+ENV XDG_RUNTIME_USER $HOME
+ENV KEYBASE_KBFS_ARGS "-mount-type=none -mode=constrained -runtime-dir=$HOME -debug -storage-root=$HOME -sync-block-cache-fraction=0 -disk-cache-mode=remote"
+ENV TMP $HOME
 
-# RUN keybase config set kbfs.mode constrained
+ENTRYPOINT [ "tini", "--", "/tmp/keybase-lambda.sh" ]
+# CMD [ "/home/keybase/keybase-lambda.sh" ]
 
-# CMD /keybase-lambda.sh
-
-CMD keybase fs read keybase://private/thedavidmeister/foo.txt
+# CMD keybase fs read keybase://private/thedavidmeister/foo.txt
