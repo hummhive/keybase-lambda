@@ -18,11 +18,19 @@ echo $HOME
 df -h
 ls -la /tmp
 # ls -la /tmp/kbfs
-ls -la /home/keybase
-ls -la /home/keybase/.config
-ls -la /home/keybase/.cache
+ls -la $HOME
+ls -la $HOME/.config
+ls -la $HOME/.cache
 
-if [ ! -f '/tmp/.config/keybase/keybased.sock' ]; then
+ps aux | grep -i keybase | grep -v grep
+ps aux | grep -i kbfs | grep -v grep
+ps aux | grep -i kbfsfuse | grep -v grep
+
+ps aux | grep -i /usr/local/bin/kbfsfuse | grep -v grep
+# if kbfsfuse process exits with a match then grep will have a 0 exit code
+KBFSFUSE_NOT_RUNNING=$?
+
+if ! (( $KBFSFUSE_NOT_RUNNING == 0 )); then
  echo 'starting services'
 
  KEYBASE_SERVICE_ARGS="-debug -use-default-log-file ${KEYBASE_SERVICE_ARGS:-""}"
@@ -47,14 +55,10 @@ ls -la $HOME
 ls -la $HOME/.config
 ls -la $HOME/.cache
 
-# keybase oneshot
 keybase fs read keybase://private/thedavidmeister/foo.txt
-# keybase logout
 
-# ls -la /tmp/kbfs
 ls -la $HOME
 ls -la $HOME/.config
 ls -la $HOME/.cache
 
 # rm -rf /tmp/tmp*
-# rm -rf /tmp/.cache
