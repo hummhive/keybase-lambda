@@ -4,7 +4,22 @@
 FROM alpine AS builder
 
 # add dependencies
-RUN apk update && apk add --no-cache go curl git musl-dev gcc
+RUN apk update
+RUN apk add --no-cache go
+RUN apk add --no-cache curl
+RUN apk add --no-cache git
+RUN apk add --no-cache musl-dev
+RUN apk add --no-cache gcc
+RUN apk add --no-cache cargo
+RUN apk add --no-cache bash
+
+RUN mkdir -p /humm_jwt_check
+WORKDIR /humm_jwt_check
+RUN curl -L https://github.com/hummhive/provenance/archive/master.tar.gz -o provenance.tar.gz
+RUN tar -zxvf provenance.tar.gz
+WORKDIR /humm_jwt_check/provenance-master
+RUN bash ./build.sh
+RUN chmod +x ./target/release/humm_jwt_check
 
 # build keybase binary
 WORKDIR /go
@@ -20,7 +35,12 @@ RUN go install -tags production github.com/keybase/client/go/kbfs/kbfsfuse
 FROM alpine
 
 # add bash for entrypoint scripts, ssh for ssh-keygen used by the bot, sudo for stepping down to keybase user
-RUN apk update && apk add --no-cache bash openssh sudo
+RUN apk update
+RUN apk add --no-cache bash
+RUN apk add --no-cache openssh
+RUN apk add --no-cache sudo
+RUN apk add --no-cache jq
+RUN apk add --no-cache libgcc
 
 # add the keybase user
 RUN adduser -s /bin/bash -h /home/keybase -D keybase
@@ -41,6 +61,7 @@ WORKDIR /home/keybase
 # copy the keybase binaries from previous build step
 COPY --from=builder --chown=keybase:keybase /go/bin/keybase /usr/local/bin/
 COPY --from=builder --chown=keybase:keybase /go/bin/kbfsfuse /usr/local/bin/
+COPY --from=builder --chown=keybase:keybase /humm_jwt_check/provenance-master/target/release/humm_jwt_check /usr/local/bin
 
 USER keybase
 
