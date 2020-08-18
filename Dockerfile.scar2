@@ -1,0 +1,13 @@
+FROM python:rc-buster
+
+RUN git clone https://github.com/grycap/scar.git
+
+WORKDIR /scar
+
+RUN pip3 install pyinstaller
+RUN pip3 install -r requirements.txt
+
+# RUN pyinstaller /scar/scar/scarcli.py
+# RUN chmod +x /scar/dist/scarcli/scarcli
+
+CMD pyinstaller --noconfirm /scar/scar/scarcli.py
