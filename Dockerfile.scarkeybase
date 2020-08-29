@@ -1,45 +1,79 @@
-FROM ubuntu
+# based on https://github.com/keybase/bot-sshca/blob/master/docker/Dockerfile-ca
 
-RUN apt-get update -y
-RUN apt-get install sudo -y
-RUN apt-get install curl -y
-RUN apt-get install wget -y
-RUN apt-get install git -y
-RUN apt-get install gcc -y
-RUN apt-get install fuse -y
-RUN apt-get install kmod -y
-# https://askubuntu.com/questions/450570/modprobe-fuse-returns-module-fuse-not-found
-# RUN apt-get install module-assistant -y
-# RUN apt-get install fuse-dev -y
-# RUN cd /usr/src
-# RUN m-a prepare
-# RUN m-a a-i fuse
-# RUN depmod -ae $(uname -r)
-# RUN modprobe fuse
+# This dockerfile builds a container capable of running the SSH CA bot.
+FROM alpine AS builder
 
-RUN useradd -ms /bin/bash scar
-USER scar
-WORKDIR /home/scar
+# add dependencies
+RUN apk update
+RUN apk add --no-cache go
+RUN apk add --no-cache curl
+RUN apk add --no-cache git
+RUN apk add --no-cache musl-dev
+RUN apk add --no-cache gcc
+RUN apk add --no-cache cargo
+RUN apk add --no-cache bash
 
-RUN curl --remote-name https://prerelease.keybase.io/keybase_amd64.deb
+RUN mkdir -p /humm_jwt_check
+WORKDIR /humm_jwt_check
+RUN curl -L https://github.com/hummhive/provenance/archive/master.tar.gz -o provenance.tar.gz
+RUN tar -zxvf provenance.tar.gz
+WORKDIR /humm_jwt_check/provenance-master
+RUN bash ./build.sh
+RUN chmod +x ./target/release/humm_jwt_check
 
-# RUN sudo apt install -y ./keybase_amd64.deb
-
-# RUN run_keybase
-
-RUN mkdir -p /tmp/gopath
-ENV GOPATH "/tmp/gopath/go/bin"
-ENV PATH "$PATH:$GOPATH"
-
-WORKDIR /tmp/gopath
-RUN wget https://dl.google.com/go/go1.14.4.linux-amd64.tar.gz
-
-RUN tar -zxvf go1.14.4.linux-amd64.tar.gz
-
-RUN go get github.com/keybase/client/go/keybase
+# build keybase binary
+WORKDIR /go
+ENV GOPATH=/go
+ENV KEYBASE_VERSION=5.4.0
+RUN go get -d github.com/keybase/client/go/keybase
+RUN cd src/github.com/keybase/client/go/keybase && git checkout v$KEYBASE_VERSION
 RUN go install -tags production github.com/keybase/client/go/keybase
 
-# RUN go get github.com/keybase/client/go/kbfsfuse
+# build kbfsfuse binary (we won't use FUSE but the bot needs KBFS for exchanging Team config files)
 RUN go install -tags production github.com/keybase/client/go/kbfs/kbfsfuse
 
-CMD $GOPATH/bin/keybase oneshot && $GOPATH/bin/keybase fs read keybase://private/thedavidmeister/foo.txt
+FROM alpine
+
+# add bash for entrypoint scripts, ssh for ssh-keygen used by the bot, sudo for stepping down to keybase user
+RUN apk update
+RUN apk add --no-cache bash
+RUN apk add --no-cache openssh
+RUN apk add --no-cache sudo
+RUN apk add --no-cache jq
+RUN apk add --no-cache libgcc
+
+# add the keybase user
+RUN adduser -s /bin/bash -h /home/keybase -D keybase
+RUN chown keybase:keybase /home/keybase
+
+ENV HOME /tmp
+
+COPY keybase-lambda.sh $HOME/keybase-lambda.sh
+RUN chown keybase $HOME/keybase-lambda.sh
+RUN chmod +x $HOME/keybase-lambda.sh
+
+# this folder is needed for kbfsfuse
+RUN mkdir /keybase && chown -R keybase:keybase /keybase
+
+USER keybase
+WORKDIR /home/keybase
+
+# copy the keybase binaries from previous build step
+COPY --from=builder --chown=keybase:keybase /go/bin/keybase /usr/local/bin/
+COPY --from=builder --chown=keybase:keybase /go/bin/kbfsfuse /usr/local/bin/
+COPY --from=builder --chown=keybase:keybase /humm_jwt_check/provenance-master/target/release/humm_jwt_check /usr/local/bin
+
+USER keybase
+
+RUN mkdir -p $HOME
+RUN mkdir -p $HOME/.cache
+RUN mkdir -p $HOME/.config
+
+ENV XDG_RUNTIME_DIR $HOME
+ENV XDG_CONFIG_DIR $HOME
+ENV XDG_RUNTIME_USER $HOME
+ENV KEYBASE_SERVICE_ARGS "-use-default-log-file"
+ENV KEYBASE_KBFS_ARGS "-log-to-file -mount-type=none -mode=constrained -runtime-dir=$HOME -storage-root=$HOME"
+ENV TMP $HOME
+
+ENTRYPOINT [ "/tmp/keybase-lambda.sh" ]
