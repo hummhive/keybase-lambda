@@ -1,0 +1,8 @@
+functions:
+  aws:
+  - lambda:
+      name: scarkeybase
+      container:
+        image: thedavidmeister/scarkeybase
+    api_gateway:
+      name: keybase-lambda
