@@ -1,6 +1,0 @@
-functions:
-  aws:
-  - lambda:
-      name: scarkeybaseza
-      container:
-        image: keybaseio/client

@@ -3,10 +3,10 @@ name: build dockers
 on:
  push:
   branches:
-   - 2020-08-29-cleanup
+   - master
  pull_request:
   branches:
-   - 2020-08-29-cleanup
+   - master
 
 jobs:
  ci:
