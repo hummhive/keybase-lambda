@@ -10,26 +10,8 @@ fi
 # move into the directory this script is in
 cd "${0%/*}"
 
-# mkdir -p $PWD/.scar
-# mkdir -p $PWD/.aws
-# chown 100:101 $PWD/.scar
-
-# docker run \
-#   --rm \
-#   -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
-#   -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
-#   -it \
-#   scar
-
-  # -v $PWD/.aws:/home/scar/.aws \
-  # -v $PWD/.scar:/home/scar/.scar \
 export kbfile=keybase://private/thedavidmeister/foo.txt
 export kbbin=/var/task/.deploy/keybase
-
-# -e XDG_RUNTIME_DIR=/tmp \
-# -e XDG_CONFIG_DIR=/tmp \
-# -e XDG_RUNTIME_USER=/tmp \
-# -e HOME=/tmp \
 
 docker run \
  --rm \
