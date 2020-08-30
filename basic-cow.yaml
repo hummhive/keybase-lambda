@@ -3,6 +3,6 @@ functions:
   - lambda:
       name: scarkeybase
       container:
-        image: thedavidmeister/scarkeybase3
+        image: thedavidmeister/scarkeybase
     api_gateway:
       name: keybase-lambda

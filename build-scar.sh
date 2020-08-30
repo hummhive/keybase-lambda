@@ -17,5 +17,3 @@ docker build \
  --build-arg AWS_ID="$AWS_ACCESS_KEY_ID" \
  --build-arg AWS_ROLE="$AWS_ROLE" \
  -t scar .
-docker build -f Dockerfile.scarkeybase3 -t thedavidmeister/scarkeybase3 .
-docker push thedavidmeister/scarkeybase3

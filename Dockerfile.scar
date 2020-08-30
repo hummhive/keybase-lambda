@@ -1,43 +1,10 @@
-FROM python:3-alpine
-ARG AWS_SECRET
-ARG AWS_ID
-ARG AWS_ROLE
-ARG KEYBASE_PAPERKEY
-ENV KEYBASE_PAPERKEY $KEYBASE_PAPERKEY
+FROM python:rc-buster
 
-RUN apk add zip unzip vim util-linux
-RUN addgroup --system scar && adduser -S -G scar scar
-USER scar
+RUN git clone https://github.com/grycap/scar.git
 
-WORKDIR /home/scar/
-RUN mkdir /home/scar/.scar
-RUN mkdir /home/scar/.aws
-RUN echo '[default]' > /home/scar/.aws/config
-RUN echo 'region=us-east-1' >> /home/scar/.aws/config
-RUN echo '[default]' > /home/scar/.aws/credentials
-RUN echo aws_access_key_id=${AWS_ID} >> /home/scar/.aws/credentials
-RUN echo aws_secret_access_key=${AWS_SECRET} >> /home/scar/.aws/credentials
+WORKDIR /scar
 
-ENV PATH=/home/scar/.local/bin:$PATH
-ENV SCAR_LOG_PATH=/home/scar/.scar/
+RUN pip3 install pyinstaller
+RUN pip3 install -r requirements.txt
 
-RUN pip3 install scar --user
-
-RUN scar init -f basic-cow.yaml; exit 0
-
-RUN cat /home/scar/.scar/scar.cfg
-
-RUN sed 's/"role": ""/"role": "arn:aws:iam::809852083755:role\/scar-test"/' -i /home/scar/.scar/scar.cfg
-
-RUN cat /home/scar/.scar/scar.cfg
-
-# RUN scar init -n scar-cowsay -i grycap/cowsay
-
-# RUN scar run -n scar-cowsay
-ADD basic-cow.yaml basic-cow.yaml
-
-ENTRYPOINT /bin/sh
-ENV BUILD 13
-# CMD scar init -i keybaseio/client -n $BUILD -e KEYBASE_PAPERKEY="$KEYBASE_PAPERKEY" -e KEYBASE_USERNAME="thedavidmeister"
-# CMD scar init -i thedavidmeister/scarkeybase2:latest -n $BUILD -e KEYBASE_PAPERKEY="$KEYBASE_PAPERKEY" -e KEYBASE_USERNAME="thedavidmeister"
-# CMD scar run -n $BUILD
+CMD pyinstaller --noconfirm /scar/scar/scarcli.py

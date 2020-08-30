@@ -4,7 +4,6 @@ jwt=$( cat $INPUT_FILE_PATH | jq '.jwt' )
 
 humm_jwt_check --jwt=$jwt --pubkey=$HIVE_PUBKEY
 jwt_valid=$?
-# jwt_valid=0
 if (( $jwt_valid > 0 )) ; then
  exit $jwt_valid
 fi
