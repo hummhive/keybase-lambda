@@ -1,4 +1,3 @@
-# FROM lambci/yumda:2
 FROM lambci/lambda:build-go1.x as kbbuild
 
 # build keybase binary
@@ -54,28 +53,6 @@ RUN ./jq
 # https://blog.quiltdata.com/an-easier-way-to-build-lambda-deployment-packages-with-docker-instead-of-ec2-9050cd486ba8
 FROM amazonlinux
 
-# add the keybase user
-# RUN /usr/sbin/adduser -s /bin/bash -h /home/keybase -D keybase
-# RUN chown keybase:keybase /home/keybase
-
-# ENV HOME /tmp
-
-# COPY keybase-lambda.sh $HOME/keybase-lambda.sh
-# RUN chown keybase $HOME/keybase-lambda.sh
-# RUN chmod +x $HOME/keybase-lambda.sh
-
-# this folder is needed for kbfsfuse
-# RUN mkdir /keybase && chown -R keybase:keybase /keybase
-# RUN mkdir /keybase
-
-# USER keybase
-# WORKDIR /home/keybase
-
-# COPY --from=kbbuild /tmp/go/bin/keybase /usr/local/bin/
-# COPY --from=kbbuild /tmp/go/bin/kbfsfuse /usr/local/bin/
-# COPY --from=jwtbuild /humm_jwt_check/provenance-master/target/release/humm_jwt_check /usr/local/bin
-# COPY --from=jwtbuild /jq/jq /usr/local/bin
-
 RUN mkdir -p /tmp/build
 COPY --from=kbbuild /tmp/go/bin/keybase /tmp/build
 COPY --from=kbbuild /tmp/go/bin/kbfsfuse /tmp/build
@@ -83,18 +60,5 @@ COPY --from=jwtbuild /humm_jwt_check/provenance-master/target/release/humm_jwt_c
 COPY --from=jwtbuild /jq/jq /tmp/build
 COPY --from=jwtbuild /procs/procs-master/target/release/procs /tmp/build
 
-# USER keybase
-
-# RUN mkdir -p $HOME
-# RUN mkdir -p $HOME/.cache
-# RUN mkdir -p $HOME/.config
-
-# ENV XDG_RUNTIME_DIR $HOME
-# ENV XDG_CONFIG_DIR $HOME
-# ENV XDG_RUNTIME_USER $HOME
-# ENV KEYBASE_SERVICE_ARGS "-use-default-log-file"
-# ENV KEYBASE_KBFS_ARGS "-log-to-file -mount-type=none -mode=constrained -runtime-dir=$HOME -storage-root=$HOME"
-# ENV TMP $HOME
-
 # ENTRYPOINT [ "/tmp/keybase-lambda.sh" ]
-CMD [ "cp /tmp/build/* /build" ]
+CMD cp /tmp/build/* /build
