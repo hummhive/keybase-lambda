@@ -37,6 +37,13 @@ WORKDIR /humm_jwt_check/provenance-master
 RUN bash ./build.sh
 RUN chmod +x ./target/release/humm_jwt_check
 
+RUN mkdir -p /procs
+WORKDIR /procs
+RUN curl -L https://github.com/dalance/procs/archive/master.tar.gz -o procs.tar.gz
+RUN tar -zxvf procs.tar.gz
+WORKDIR /procs/procs-master
+RUN cargo build --release
+
 RUN mkdir -p /jq
 WORKDIR /jq
 RUN curl -L https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 -o jq
@@ -51,35 +58,43 @@ FROM amazonlinux
 # RUN /usr/sbin/adduser -s /bin/bash -h /home/keybase -D keybase
 # RUN chown keybase:keybase /home/keybase
 
-ENV HOME /tmp
+# ENV HOME /tmp
 
-COPY keybase-lambda.sh $HOME/keybase-lambda.sh
+# COPY keybase-lambda.sh $HOME/keybase-lambda.sh
 # RUN chown keybase $HOME/keybase-lambda.sh
-RUN chmod +x $HOME/keybase-lambda.sh
+# RUN chmod +x $HOME/keybase-lambda.sh
 
 # this folder is needed for kbfsfuse
 # RUN mkdir /keybase && chown -R keybase:keybase /keybase
-RUN mkdir /keybase
+# RUN mkdir /keybase
 
 # USER keybase
 # WORKDIR /home/keybase
 
-COPY --from=kbbuild /tmp/go/bin/keybase /usr/local/bin/
-COPY --from=kbbuild /tmp/go/bin/kbfsfuse /usr/local/bin/
-COPY --from=jwtbuild /humm_jwt_check/provenance-master/target/release/humm_jwt_check /usr/local/bin
-COPY --from=jwtbuild /jq/jq /usr/local/bin
+# COPY --from=kbbuild /tmp/go/bin/keybase /usr/local/bin/
+# COPY --from=kbbuild /tmp/go/bin/kbfsfuse /usr/local/bin/
+# COPY --from=jwtbuild /humm_jwt_check/provenance-master/target/release/humm_jwt_check /usr/local/bin
+# COPY --from=jwtbuild /jq/jq /usr/local/bin
+
+RUN mkdir -p /tmp/build
+COPY --from=kbbuild /tmp/go/bin/keybase /tmp/build
+COPY --from=kbbuild /tmp/go/bin/kbfsfuse /tmp/build
+COPY --from=jwtbuild /humm_jwt_check/provenance-master/target/release/humm_jwt_check /tmp/build
+COPY --from=jwtbuild /jq/jq /tmp/build
+COPY --from=jwtbuild /procs/procs-master/target/release/procs /tmp/build
 
 # USER keybase
 
-RUN mkdir -p $HOME
-RUN mkdir -p $HOME/.cache
-RUN mkdir -p $HOME/.config
+# RUN mkdir -p $HOME
+# RUN mkdir -p $HOME/.cache
+# RUN mkdir -p $HOME/.config
 
-ENV XDG_RUNTIME_DIR $HOME
-ENV XDG_CONFIG_DIR $HOME
-ENV XDG_RUNTIME_USER $HOME
-ENV KEYBASE_SERVICE_ARGS "-use-default-log-file"
-ENV KEYBASE_KBFS_ARGS "-log-to-file -mount-type=none -mode=constrained -runtime-dir=$HOME -storage-root=$HOME"
-ENV TMP $HOME
+# ENV XDG_RUNTIME_DIR $HOME
+# ENV XDG_CONFIG_DIR $HOME
+# ENV XDG_RUNTIME_USER $HOME
+# ENV KEYBASE_SERVICE_ARGS "-use-default-log-file"
+# ENV KEYBASE_KBFS_ARGS "-log-to-file -mount-type=none -mode=constrained -runtime-dir=$HOME -storage-root=$HOME"
+# ENV TMP $HOME
 
-ENTRYPOINT [ "/tmp/keybase-lambda.sh" ]
+# ENTRYPOINT [ "/tmp/keybase-lambda.sh" ]
+CMD [ "cp /tmp/build/* /build" ]
