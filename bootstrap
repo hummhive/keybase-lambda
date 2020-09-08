@@ -32,7 +32,6 @@ do
   jwt=$( echo $EVENT_DATA | jq '.jwt' )
   humm_jwt_check --jwt=$jwt --pubkey=$HIVE_PUBKEY
   jwt_valid=$?
-  jwt_valid=0
   if (( $jwt_valid > 0 )) ; then
    echo 'jwt not valid'
    continue
