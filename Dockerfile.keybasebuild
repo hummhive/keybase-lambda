@@ -1,30 +1,61 @@
-# FROM lambci/yumda:2
-# FROM lambci/lambda:go1.x
+FROM lambci/lambda:build-go1.x as kbbuild
+
+# build keybase binary
+RUN mkdir -p /tmp/go
+WORKDIR /tmp/go
+ENV GOPATH /tmp/go
+ENV KEYBASE_VERSION 5.4.0
+RUN go get -d github.com/keybase/client/go/keybase
+RUN cd src/github.com/keybase/client/go/keybase && git checkout v$KEYBASE_VERSION
+RUN go install -tags production github.com/keybase/client/go/keybase
+
+# build kbfsfuse binary (we won't use FUSE but the bot needs KBFS for exchanging Team config files)
+RUN go install -tags production github.com/keybase/client/go/kbfs/kbfsfuse
+
+RUN echo $GOPATH
+RUN ls -la $GOPATH/bin
+
+FROM lambci/lambda:build as jwtbuild
+
+RUN pwd
+RUN whoami
+RUN echo $HOME
+RUN echo $PATH
+
+RUN yum -y update
+RUN yum -y install curl
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH ${PATH}:/root/.cargo/bin
+RUN echo $PATH
+
+RUN mkdir -p /humm_jwt_check
+WORKDIR /humm_jwt_check
+RUN curl -L https://github.com/hummhive/provenance/archive/master.tar.gz -o provenance.tar.gz
+RUN tar -zxvf provenance.tar.gz
+WORKDIR /humm_jwt_check/provenance-master
+RUN bash ./build.sh
+RUN chmod +x ./target/release/humm_jwt_check
+
+RUN mkdir -p /procs
+WORKDIR /procs
+RUN curl -L https://github.com/dalance/procs/archive/master.tar.gz -o procs.tar.gz
+RUN tar -zxvf procs.tar.gz
+WORKDIR /procs/procs-master
+RUN cargo build --release
+
+RUN mkdir -p /jq
+WORKDIR /jq
+RUN curl -L https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 -o jq
+RUN ls -la
+RUN chmod +x ./jq
+RUN ./jq
 
 # https://blog.quiltdata.com/an-easier-way-to-build-lambda-deployment-packages-with-docker-instead-of-ec2-9050cd486ba8
 FROM amazonlinux
 
-ARG PAPERKEY
-ARG VERSION
-
-RUN yum -y update
-RUN yum -y install git tar gcc wget
-
-RUN pwd
-
-RUN mkdir -p /tmp/gopath
-ENV GOPATH "/tmp/gopath/go/bin"
-ENV PATH "$PATH:$GOPATH"
-
-WORKDIR /tmp/gopath
-RUN wget https://dl.google.com/go/go1.14.4.linux-amd64.tar.gz
-
-RUN tar -zxvf go1.14.4.linux-amd64.tar.gz
-
-RUN go get github.com/keybase/client/go/keybase
-RUN go install -tags production github.com/keybase/client/go/keybase
-
-# RUN go get github.com/keybase/client/go/kbfsfuse
-RUN go install -tags production github.com/keybase/client/go/kbfs/kbfsfuse
-
-CMD cp $GOPATH/bin/* /deploy
+RUN mkdir -p /tmp/build
+COPY --from=kbbuild /tmp/go/bin/keybase /tmp/build
+COPY --from=kbbuild /tmp/go/bin/kbfsfuse /tmp/build
+COPY --from=jwtbuild /humm_jwt_check/provenance-master/target/release/humm_jwt_check /tmp/build
+COPY --from=jwtbuild /jq/jq /tmp/build
+COPY --from=jwtbuild /procs/procs-master/target/release/procs /tmp/build

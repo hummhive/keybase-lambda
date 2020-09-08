@@ -41,6 +41,7 @@ yarn install --no-bin-links
    holonix.pkgs.docker
    holonix.pkgs.zip
    holonix.pkgs.jq
+   holonix.pkgs.awscli
   ]
    ++ holonix.shell.buildInputs
    ++ config.buildInputs

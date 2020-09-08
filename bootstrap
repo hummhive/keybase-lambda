@@ -1,0 +1,76 @@
+#!/bin/sh
+
+# set -euo pipefail
+
+export PATH=$PATH:/var/task
+
+export TMP=/tmp
+export HOME=$TMP
+mkdir -p $HOME
+mkdir -p $HOME/.cache
+mkdir -p $HOME/.config
+
+export XDG_RUNTIME_DIR=$HOME
+export XDG_CONFIG_DIR=$HOME
+export XDG_RUNTIME_USER=$HOME
+export KEYBASE_SERVICE_ARGS="-use-default-log-file"
+export KEYBASE_KBFS_ARGS="-log-to-file -mount-type=none -mode=constrained -runtime-dir=$HOME -storage-root=$HOME"
+
+# Processing
+while true
+do
+  HEADERS="$(mktemp)"
+
+  # Get an event. The HTTP request will block until one is received
+  EVENT_DATA=$(curl -sS -LD "$HEADERS" -X GET "http://${AWS_LAMBDA_RUNTIME_API}/2018-06-01/runtime/invocation/next")
+
+  # Extract request ID by scraping response headers received above
+  REQUEST_ID=$(grep -Fi Lambda-Runtime-Aws-Request-Id "$HEADERS" | tr -d '[:space:]' | cut -d: -f2)
+
+  # Execute the handler function from the script
+
+  jwt=$( echo $EVENT_DATA | jq '.jwt' )
+  humm_jwt_check --jwt=$jwt --pubkey=$HIVE_PUBKEY
+  jwt_valid=$?
+  if (( $jwt_valid > 0 )) ; then
+   echo 'jwt not valid'
+   continue
+  fi
+
+  mkdir -p $HOME/.config/procs
+
+  # if kbfsfuse process exits with a match then grep will have a 0 exit code
+  procs --config > $TMP/.config/procs/config.toml
+  procs | grep -i kbfsfuse | grep -qv grep
+  KBFSFUSE_NOT_RUNNING=$?
+
+  if ! (( $KBFSFUSE_NOT_RUNNING == 0 )); then
+   echo 'starting services'
+
+   keybase $KEYBASE_SERVICE_ARGS service &
+
+   echo 'starting kbfsfuse'
+
+   kbfsfuse $KEYBASE_KBFS_ARGS &
+
+   echo 'waiting'
+
+   keybase ctl wait --include-kbfs
+
+   echo 'logging in'
+   keybase --no-auto-fork --no-debug oneshot
+  fi
+
+  export outdir="$TMP/reads/$REQUEST_ID"
+  mkdir -p $outdir
+  # read up to 20 files in parallel
+  keybase fs ls -1 -a --rec $HIVE_KEYBASE_PATH | grep .json | xargs -n 1 -P 5 -I "{}" bash -c 'keybase fs read $HIVE_KEYBASE_PATH/{} > $outdir/$( cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1 ).json'
+
+  # https://github.com/stedolan/jq/issues/744
+  jq --slurp '.' $outdir/*.json > $outdir/items.json
+
+  # Send the response
+  curl -X POST "http://${AWS_LAMBDA_RUNTIME_API}/2018-06-01/runtime/invocation/$REQUEST_ID/response" -s -d @$outdir/items.json
+
+  rm -rf $outdir
+done

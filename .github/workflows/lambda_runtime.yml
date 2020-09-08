@@ -1,0 +1,30 @@
+name: lambda runtime build
+
+on:
+ push:
+  branches:
+   - master
+
+ pull_request:
+  branches:
+   - master
+
+jobs:
+
+ build:
+  runs-on: ubuntu-latest
+
+  steps:
+   - uses: actions/checkout@v1
+   - name: build
+     run: ./build-runtime.sh
+
+   - name: Upload binaries
+     uses: svenstaro/upload-release-action@v2
+     with:
+       repo_token: ${{ secrets.GITHUB_TOKEN }}
+       file: ./runtime/runtime.zip
+       asset_name: runtime.zip
+       tag: r${{ github.ref }}
+       overwrite: true
+       body: "The custom runtime for lambda"
