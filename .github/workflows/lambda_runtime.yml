@@ -1,0 +1,20 @@
+name: lambda runtime build
+
+on:
+ push:
+  branches:
+   - 2020-09-06-lambda-optimise
+
+ pull_request:
+  branches:
+   - 2020-09-06-lambda-optimise
+
+jobs:
+
+ build:
+  runs-on: ubuntu-latest
+
+ steps:
+  - uses: actions/checkout@v1
+  - name: build
+    run: ./build-runtime.sh

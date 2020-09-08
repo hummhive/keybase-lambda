@@ -59,6 +59,3 @@ COPY --from=kbbuild /tmp/go/bin/kbfsfuse /tmp/build
 COPY --from=jwtbuild /humm_jwt_check/provenance-master/target/release/humm_jwt_check /tmp/build
 COPY --from=jwtbuild /jq/jq /tmp/build
 COPY --from=jwtbuild /procs/procs-master/target/release/procs /tmp/build
-
-# ENTRYPOINT [ "/tmp/keybase-lambda.sh" ]
-CMD cp /tmp/build/* /build
