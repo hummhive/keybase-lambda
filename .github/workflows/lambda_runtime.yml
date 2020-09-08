@@ -25,6 +25,6 @@ jobs:
        repo_token: ${{ secrets.GITHUB_TOKEN }}
        file: ./runtime/runtime.zip
        asset_name: runtime.zip
-       tag: ${{ github.ref }}
+       tag: r${{ github.ref }}
        overwrite: true
        body: "The custom runtime for lambda"
