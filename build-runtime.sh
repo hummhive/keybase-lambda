@@ -3,7 +3,7 @@
 set -eux
 
 # guard against nix shell
-if [[ -z $IN_NIX_SHELL ]]
+if [[ -z $IN_NIX_SHELL && -z $CI ]]
  then
   echo "run needs to be run from the nix shell"
   exit 1
