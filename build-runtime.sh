@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-set -euxo pipefail
+set -eux
 
 # guard against nix shell
 if [[ -z $IN_NIX_SHELL ]]
