@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-set -eux
+set -ex
 
 # guard against nix shell
 if [[ -z $IN_NIX_SHELL && -z $CI ]]
