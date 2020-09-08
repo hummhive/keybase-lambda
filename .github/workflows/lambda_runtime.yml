@@ -3,11 +3,11 @@ name: lambda runtime build
 on:
  push:
   branches:
-   - 2020-09-06-lambda-optimise
+   - master
 
  pull_request:
   branches:
-   - 2020-09-06-lambda-optimise
+   - master
 
 jobs:
 
