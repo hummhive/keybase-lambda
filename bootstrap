@@ -29,7 +29,7 @@ do
 
   # Execute the handler function from the script
 
-  jwt=$( echo $EVENT_DATA | jq '.jwt' )
+  jwt=$( echo $EVENT_DATA | jq --raw-output '.jwt' )
   humm_jwt_check --jwt=$jwt --pubkey=$HIVE_PUBKEY
   jwt_valid=$?
   if (( $jwt_valid > 0 )) ; then
