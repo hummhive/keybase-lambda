@@ -34,7 +34,10 @@ do
   jwt_valid=$?
   if (( $jwt_valid > 0 )) ; then
    echo 'jwt not valid'
-   continue
+   # Send error response
+    ERROR="{\"errorMessage\" : \"jwt not valid.\", \"errorType\" : \"InvalidEventDataException\"}"
+    curl -X POST "http://${AWS_LAMBDA_RUNTIME_API}/2018-06-01/runtime/invocation/$REQUEST_ID/error" -d "$ERROR" --header "Lambda-Runtime-Function-Error-Type: Unhandled"
+    break
   fi
 
   mkdir -p $HOME/.config/procs
