@@ -22,6 +22,7 @@ RUN whoami
 RUN echo $HOME
 RUN echo $PATH
 
+# install rust
 RUN yum -y update
 RUN yum -y install curl
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y

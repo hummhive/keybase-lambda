@@ -1,0 +1,31 @@
+FROM lambci/lambda:build as hcbuild
+
+RUN yum -y update
+RUN yum -y install curl
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.45.1
+ENV PATH ${PATH}:/root/.cargo/bin
+RUN echo $PATH
+
+RUN mkdir -p /lair
+WORKDIR /lair
+RUN curl -L https://github.com/holochain/lair/archive/master.tar.gz -o lair.tar.gz
+RUN tar -zxvf lair.tar.gz
+WORKDIR /lair/lair-master
+
+RUN cargo install --path crates/lair_keystore
+
+RUN mkdir -p /holochain
+WORKDIR /holochain
+RUN curl -L https://github.com/holochain/holochain/archive/develop.tar.gz -o holochain.tar.gz
+RUN tar -zxvf holochain.tar.gz
+WORKDIR /holochain/holochain-develop
+
+RUN cargo install --path crates/holochain
+RUN cargo install --path crates/dna_util
+
+FROM amazonlinux
+
+run mkdir -p /tmp/build
+COPY --from=hcbuild /root/.cargo/bin/dna-util /tmp/build
+COPY --from=hcbuild /root/.cargo/bin/holochain /tmp/build
+COPY --from=hcbuild /root/.cargo/bin/lair-keystore /tmp/build

@@ -1,0 +1,41 @@
+#!/bin/sh
+
+# set -euo pipefail
+
+export PATH=$PATH:/var/task
+
+export TMP=/tmp
+export HOME=$TMP
+mkdir -p $HOME
+mkdir -p $HOME/.cache
+mkdir -p $HOME/.config
+
+# Processing
+while true
+do
+  HEADERS="$(mktemp)"
+
+  # Get an event. The HTTP request will block until one is received
+  EVENT_DATA=$(curl -sS -LD "$HEADERS" -X GET "http://${AWS_LAMBDA_RUNTIME_API}/2018-06-01/runtime/invocation/next")
+
+  # Extract request ID by scraping response headers received above
+  REQUEST_ID=$(grep -Fi Lambda-Runtime-Aws-Request-Id "$HEADERS" | tr -d '[:space:]' | cut -d: -f2)
+
+  # Execute the handler function from the script
+
+  # jwt=$( echo $EVENT_DATA | jq --raw-output '.body' | jq --raw-output '.body' | jq --raw-output '.jwt' )
+  # humm_jwt_check --jwt=$jwt --pubkey=$HIVE_PUBKEY
+  # jwt_valid=$?
+  # if (( $jwt_valid > 0 )) ; then
+  #  echo 'jwt not valid'
+  #  # Send error response
+  #  ERROR="{\"errorMessage\" : \"jwt not valid.\", \"errorType\" : \"InvalidEventDataException\"}"
+  #  curl -X POST "http://${AWS_LAMBDA_RUNTIME_API}/2018-06-01/runtime/invocation/$REQUEST_ID/error" -s -d "$ERROR" --header "Lambda-Runtime-Function-Error-Type: Unhandled"
+  #  break
+  # fi
+
+  holochain
+
+  # Send the response
+  echo "foo" | curl -X POST "http://${AWS_LAMBDA_RUNTIME_API}/2018-06-01/runtime/invocation/$REQUEST_ID/response" -H "Content-Type: application/json" -s --data-binary @-
+done

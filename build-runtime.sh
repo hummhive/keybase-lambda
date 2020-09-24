@@ -12,20 +12,28 @@ fi
 # move into the directory this script is in
 cd "${0%/*}"
 
+# fresh start
 rm -rf build
 rm -rf runtime
-mkdir -p build
-mkdir -p runtime
 
-docker build -f ./Dockerfile.keybasebuild -t hummhive/keybase-lambda .
-cid=$( docker create hummhive/keybase-lambda )
-docker cp ${cid}:/tmp/build $PWD
-docker rm ${cid}
+function build {
+ name=$1
+ tag=hummhive/${name}-lambda
+ mkdir -p "runtime/${name}"
+ mkdir -p "build/${name}"
+ docker build -f "./Dockerfile.${name}build" -t $tag .
+ cid=$( docker create $tag )
+ docker cp ${cid}:/tmp/build $PWD/build/$name
+ docker rm ${cid}
+ mv -f ./build/$name/build/* ./runtime/$name
+ cp ./bootstrap/$name ./runtime/$name/bootstrap
 
-mv -f ./build/* ./runtime
+ (
+  cd runtime/$name \
+  && chmod +x ./* \
+  && zip runtime-$name.zip ./*
+ )
+}
 
-cp ./bootstrap ./runtime
-
-cd runtime
-chmod +x ./*
-zip runtime.zip ./*
+build keybase
+build holochain
